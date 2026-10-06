@@ -58,7 +58,7 @@
   }
 
   /* 2 & 3. Universal Button Rules: center aligned text, never overflow button, never overflow container */
-  button {
+  button:not([role="switch"]):not([data-switch]) {
     text-align: center;
     max-width: 100%;
     overflow-wrap: break-word;
@@ -68,11 +68,25 @@
     justify-content: center;
   }
 
-  button span,
-  button p,
-  button div {
+  button[role="switch"],
+  button[data-switch] {
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start !important;
+    text-align: left;
+  }
+
+  button:not([role="switch"]):not([data-switch]) span,
+  button:not([role="switch"]):not([data-switch]) p,
+  button:not([role="switch"]):not([data-switch]) div {
     text-align: center;
     max-width: 100%;
+  }
+
+  button[role="switch"] span,
+  button[data-switch] span {
+    max-width: none;
   }
 
   /* 4. Any indicators or badges should not overflow their container */
