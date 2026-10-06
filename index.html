@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" class="light" style="color-scheme: light; background-color: #ffffff;">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Namana Physiotherapy Clinic</title>
+    <meta name="description" content="Clinical record management, patient case sheets, consultation receipts, monthly analytics, IT returns, voice AI clinical dictation, and dynamic public API data sync." />
+    <meta property="og:title" content="Namana Physiotherapy Clinic" />
+    <meta property="og:description" content="Clinical record management, patient case sheets, consultation receipts, monthly analytics, IT returns, voice AI clinical dictation, and dynamic public API data sync." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Namana Physio" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').then((reg) => {
+            reg.update();
+          }).catch((err) => {
+            console.log('ServiceWorker registration skipped:', err);
+          });
+        });
+      }
+    </script>
+  </head>
+  <body class="bg-white text-slate-900" style="color-scheme: light; background-color: #ffffff;">
+    <div id="root">
+      <!-- Instant Loading Screen with Rotating Clinic Logo -->
+      <div id="html-loading-screen" style="position: fixed; inset: 0; z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(to bottom, #f8fafc, #f0f9ff, #f8fafc); font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; user-select: none;">
+        <div style="position: relative; display: flex; align-items: center; justify-content: center; width: 120px; height: 120px;">
+          <!-- Ambient glowing pulse -->
+          <div style="position: absolute; inset: -14px; border-radius: 9999px; background: radial-gradient(circle, rgba(14, 165, 233, 0.22) 0%, rgba(14, 165, 233, 0) 70%); animation: pulse-ring 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
+          <div style="position: absolute; inset: -4px; border-radius: 9999px; border: 2px dashed rgba(56, 189, 248, 0.5); animation: spin-outer 8s linear infinite;"></div>
+          <!-- Rotating Clinic Logo Container -->
+          <div style="position: relative; padding: 6px; border-radius: 9999px; background: #ffffff; box-shadow: 0 12px 30px -4px rgba(14, 165, 233, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.05); border: 1px solid #e0f2fe;">
+            <img src="/clinic_logo.png" alt="Namana Physiotherapy Clinic" style="width: 96px; height: 96px; object-fit: contain; border-radius: 9999px; display: block; animation: spin-logo 3.5s linear infinite; will-change: transform;" />
+          </div>
+        </div>
+        <div style="margin-top: 28px; text-align: center; padding: 0 16px;">
+          <div style="font-size: 16px; font-weight: 800; color: #082f49; letter-spacing: -0.02em;">NAMANA PHYSIOTHERAPY CLINIC</div>
+          <div style="font-size: 12px; font-weight: 600; color: #0284c7; margin-top: 6px; letter-spacing: 0.04em;">Loading clinical database...</div>
+        </div>
+        <div style="margin-top: 20px; width: 140px; height: 4px; background: #e2e8f0; border-radius: 9999px; overflow: hidden;">
+          <div style="width: 60%; height: 100%; background: linear-gradient(90deg, #38bdf8, #0ea5e9, #0284c7); border-radius: 9999px; animation: progress-pulse 1.6s ease-in-out infinite;"></div>
+        </div>
+      </div>
+      <style>
+        @keyframes spin-logo {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes spin-outer {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes pulse-ring {
+          0%, 100% { transform: scale(0.96); opacity: 0.5; }
+          50% { transform: scale(1.15); opacity: 0.9; }
+        }
+        @keyframes progress-pulse {
+          0% { transform: translateX(-100%); }
+          50% { transform: translateX(50%); }
+          100% { transform: translateX(200%); }
+        }
+      </style>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

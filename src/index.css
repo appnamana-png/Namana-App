@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+/* Mandatory White / Light Theme Enforcement on All Devices (Mobile, Tab, Desktop) */
+:root {
+  color-scheme: light !important;
+  --supported-color-schemes: light;
+}
+
+@layer base {
+  /* Box model normalization */
+  *, ::before, ::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: light !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  html, body {
+    max-width: 100%;
+    overflow-x: hidden;
+    color-scheme: light !important;
+    background-color: #ffffff !important;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #0f172a !important;
+    background-color: #ffffff !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Universal lock to prevent browser dark mode overrides */
+  @media (prefers-color-scheme: dark) {
+    :root, html, body {
+      color-scheme: light !important;
+      background-color: #ffffff !important;
+      color: #0f172a !important;
+    }
+  }
+
+  /* 
+   * GENERAL RULES FOR WHOLE SYSTEM (Mobile, Tab, Computer)
+   * 1. Text inside container should never overflow its native container.
+   * 2. Text inside button should not overflow the button and should be center aligned.
+   * 3. Button should not overflow its container (max-width: 100%).
+   * 4. Any indicators (badges, pills, tags, chips) should not overflow their container.
+   * 5. No buttons should touch the line or border of their container.
+   */
+
+  /* 1. Text inside container should never overflow its native container */
+  p, span, h1, h2, h3, h4, h5, h6, label, div, a, li, input, select, textarea {
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+
+  /* 2 & 3. Universal Button Rules: center aligned text, never overflow button, never overflow container */
+  button {
+    text-align: center;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  button span,
+  button p,
+  button div {
+    text-align: center;
+    max-width: 100%;
+  }
+
+  /* 4. Any indicators or badges should not overflow their container */
+  [role="status"],
+  [class*="badge"],
+  [class*="indicator"],
+  [class*="rounded-full"],
+  [class*="rounded-lg"],
+  [class*="rounded-xl"] {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 5. Clearance: Ensure buttons never touch boundary lines of their parent containers */
+  .grid > button,
+  .flex > button {
+    margin: 0;
+  }
+}
+
+@media print {
+  html, body, #root {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .print\:hidden {
+    display: none !important;
+  }
+  .print\:block {
+    display: block !important;
+  }
+  header, nav, #app-header, .no-print {
+    display: none !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

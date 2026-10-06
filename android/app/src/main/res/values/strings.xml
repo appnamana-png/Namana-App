@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Namana Physiotherapy Clinic</string>
+    <string name="title_activity_main">Namana Physiotherapy Clinic</string>
+    <string name="package_name">com.namana.physio</string>
+    <string name="custom_url_scheme">com.namana.physio</string>
+</resources>

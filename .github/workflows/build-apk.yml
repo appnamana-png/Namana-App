@@ -1,0 +1,110 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Select build variant'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - release
+          - debug
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Sync Capacitor Android Project
+        run: npx cap sync android
+
+      - name: Set up Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
+      - name: Make Gradlew Executable
+        run: |
+          chmod +x ./gradlew || true
+          chmod +x android/gradlew || true
+
+      - name: Build APK with Gradle
+        run: |
+          cd android
+          BUILD_CHOICE="${{ github.event.inputs.build_type }}"
+          if [ -z "$BUILD_CHOICE" ] || [ "$BUILD_CHOICE" = "both" ]; then
+            echo "Building both Debug and Release APKs..."
+            ./gradlew assembleDebug assembleRelease --no-daemon --stacktrace
+          elif [ "$BUILD_CHOICE" = "release" ]; then
+            echo "Building Release APK..."
+            ./gradlew assembleRelease --no-daemon --stacktrace
+          else
+            echo "Building Debug APK..."
+            ./gradlew assembleDebug --no-daemon --stacktrace
+          fi
+
+      - name: Organize APK Artifacts
+        run: |
+          mkdir -p output-apks
+          # Find and copy all built APKs with recognizable names
+          if [ -f "android/app/build/outputs/apk/release/app-release.apk" ]; then
+            cp "android/app/build/outputs/apk/release/app-release.apk" "output-apks/NamanaPhysioClinic-release.apk"
+          fi
+          if [ -f "android/app/build/outputs/apk/debug/app-debug.apk" ]; then
+            cp "android/app/build/outputs/apk/debug/app-debug.apk" "output-apks/NamanaPhysioClinic-debug.apk"
+          fi
+          # Fallback copy if named differently
+          find android/app/build/outputs/apk -name "*.apk" -exec cp -u {} output-apks/ \;
+          ls -la output-apks/
+
+      - name: Upload APK as Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NamanaPhysioClinic-APK
+          path: output-apks/*.apk
+          retention-days: 30
+
+      - name: Create or Update GitHub Release with APK
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'workflow_dispatch'
+        with:
+          tag_name: latest-apk
+          name: "Namana Physiotherapy Clinic Android APK (Latest Build)"
+          body: |
+            ### Namana Physiotherapy Clinic Android APK
+            Automated cloud build from commit `${{ github.sha }}`.
+            Download `NamanaPhysioClinic-release.apk` or `NamanaPhysioClinic-debug.apk` to install on any Android phone or tablet.
+          files: output-apks/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
