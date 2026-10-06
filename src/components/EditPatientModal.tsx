@@ -17,6 +17,7 @@ import {
   Save,
   Clock,
   Loader2,
+  Lock,
 } from 'lucide-react';
 import { Patient, VisitType, PaymentMethod } from '../types';
 import { BLOOD_GROUPS, COMMON_DIAGNOSES, HEIGHT_PRESETS } from '../constants';
@@ -26,6 +27,7 @@ import {
   getCommonReferralDoctors,
   saveCommonReferralDoctors,
   formatTime24Hour,
+  formatPatientId,
 } from '../utils/storage';
 import { ManageReferralDoctorsModal } from './ManageReferralDoctorsModal';
 import { PainScaleComponent } from './PainScaleComponent';
@@ -44,9 +46,11 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
   onSave,
   onClose,
 }) => {
+  // Patient ID is immutable as it is the primary key across records and spreadsheets
+  const patientId = patient.regNo || formatPatientId(patient.date, patient.serial);
+
   // Form states pre-filled with the patient's existing details
   const [name, setName] = useState(patient.name || '');
-  const [regNo, setRegNo] = useState(patient.regNo || '');
   const [age, setAge] = useState<string | number>(patient.age ?? '');
   const [sex, setSex] = useState<'Male' | 'Female' | 'Other'>(
     patient.sex === 'Female' || patient.sex === 'Other' ? patient.sex : 'Male'
@@ -212,7 +216,7 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
     const updatedPatient: Patient = {
       ...patient,
       name: name.trim(),
-      regNo: regNo.trim() || patient.regNo,
+      regNo: patientId,
       date,
       time: time.trim() || patient.time || formatTime24Hour(),
       age: Number(age) || age,
@@ -263,8 +267,9 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
                 <h3 className="text-sm sm:text-base font-extrabold text-sky-950 truncate">
                   Edit Patient Details & Demographics
                 </h3>
-                <span className="font-mono text-xs font-bold text-sky-800 bg-sky-100 border border-sky-200 px-2 py-0.5 rounded-lg shrink-0">
-                  {regNo || patient.regNo}
+                <span className="font-mono text-xs font-bold text-sky-800 bg-sky-100 border border-sky-200 px-2 py-0.5 rounded-lg shrink-0 flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-sky-600" />
+                  <span>{patientId}</span>
                 </span>
               </div>
               <p className="text-[10.5px] sm:text-[11px] text-slate-500 truncate">
@@ -365,16 +370,21 @@ export const EditPatientModal: React.FC<EditPatientModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold text-slate-700 mb-1">
-                  Patient ID / Reg No
-                </label>
-                <input
-                  type="text"
-                  value={regNo}
-                  onChange={(e) => setRegNo(e.target.value)}
-                  placeholder="e.g. NPC/26/10/001"
-                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-mono font-bold text-sky-950 outline-none focus:border-sky-500 shadow-2xs"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[11px] font-bold text-slate-700">
+                    Patient ID (Primary Key)
+                  </label>
+                  <span className="text-[10px] text-slate-400 flex items-center gap-1 font-semibold">
+                    <Lock className="w-3 h-3 text-slate-400" />
+                    <span>Locked</span>
+                  </span>
+                </div>
+                <div className="w-full px-3.5 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-xs font-mono font-bold text-sky-950 shadow-2xs flex items-center justify-between select-all cursor-not-allowed">
+                  <span>{patientId}</span>
+                  <span className="text-[9.5px] font-sans font-extrabold text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                    Primary Key
+                  </span>
+                </div>
               </div>
             </div>
 
