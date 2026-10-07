@@ -26,12 +26,24 @@ import {
   Edit3,
 } from 'lucide-react';
 import { Patient, SearchFilter } from '../types';
-import { deduplicatePatients, formatPatientId } from '../utils/storage';
+import {
+  deduplicatePatients,
+  formatPatientId,
+  comparePatientsByIdDesc,
+  comparePatientsByIdAsc,
+} from '../utils/storage';
 import { generatePdfCaseSheet } from '../utils/pdfCaseSheet';
 import { PermanentDeleteModal } from './PermanentDeleteModal';
 import { PatientPhoneDirectoryModal } from './PatientPhoneDirectoryModal';
 
-export type PatientSortOption = 'date-desc' | 'date-asc' | 'name-asc' | 'name-desc';
+export type PatientSortOption =
+  | 'id-desc'
+  | 'id-asc'
+  | 'id-asec'
+  | 'date-desc'
+  | 'date-asc'
+  | 'name-asc'
+  | 'name-desc';
 
 interface PatientDirectoryProps {
   patients: Patient[];
@@ -79,7 +91,7 @@ export const PatientDirectory: React.FC<PatientDirectoryProps> = ({
   onOpenVoiceCommand,
 }) => {
   const currentStatus = searchFilter.status || 'active';
-  const [sortBy, setSortBy] = useState<PatientSortOption>('date-desc');
+  const [sortBy, setSortBy] = useState<PatientSortOption>('id-desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
@@ -151,29 +163,38 @@ export const PatientDirectory: React.FC<PatientDirectoryProps> = ({
     });
   }, [distinctPatients, searchFilter]);
 
-  // Sort patients through name and date across all three categories
+  // Sort patients through Patient ID (default), name, and date
   const sortedPatients = useMemo(() => {
     const list = [...filteredPatients];
     list.sort((a, b) => {
+      if (sortBy === 'id-desc') {
+        return comparePatientsByIdDesc(a, b);
+      }
+      if (sortBy === 'id-asc' || sortBy === 'id-asec') {
+        return comparePatientsByIdAsc(a, b);
+      }
       if (sortBy === 'name-asc') {
         const res = (a.name || '').localeCompare(b.name || '');
         if (res !== 0) return res;
-        return (a.serial || 0) - (b.serial || 0);
+        return comparePatientsByIdDesc(a, b);
       }
       if (sortBy === 'name-desc') {
         const res = (b.name || '').localeCompare(a.name || '');
         if (res !== 0) return res;
-        return (b.serial || 0) - (a.serial || 0);
+        return comparePatientsByIdDesc(a, b);
       }
       if (sortBy === 'date-asc') {
         const res = (a.date || '').localeCompare(b.date || '');
         if (res !== 0) return res;
-        return (a.serial || 0) - (b.serial || 0);
+        return comparePatientsByIdAsc(a, b);
       }
-      // date-desc (default)
-      const res = (b.date || '').localeCompare(a.date || '');
-      if (res !== 0) return res;
-      return (b.serial || 0) - (a.serial || 0);
+      if (sortBy === 'date-desc') {
+        const res = (b.date || '').localeCompare(a.date || '');
+        if (res !== 0) return res;
+        return comparePatientsByIdDesc(a, b);
+      }
+      // default: Patient ID descending
+      return comparePatientsByIdDesc(a, b);
     });
     return list;
   }, [filteredPatients, sortBy]);
@@ -545,43 +566,101 @@ export const PatientDirectory: React.FC<PatientDirectoryProps> = ({
           </div>
         )}
 
-        {/* Sort Bar - Clean & Uncluttered for Date and Name */}
-        <div className="flex items-center justify-between text-xs pt-0.5">
-          <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
-            <ArrowUpDown className="w-3 h-3 text-slate-400" />
-            <span>Sort</span>
-          </span>
+        {/* Sort Controls Bar with Dedicated ID Sort Buttons */}
+        <div className="space-y-1.5 pt-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1">
+              <ArrowUpDown className="w-3 h-3 text-sky-600" />
+              <span>Sort Order</span>
+            </span>
 
-          <div className="flex items-center gap-1 shrink-0">
-            {/* Sort by Date Toggle */}
+            <div className="flex items-center gap-1 shrink-0">
+              {/* Sort by Date Toggle */}
+              <button
+                type="button"
+                onClick={() => setSortBy(sortBy === 'date-desc' ? 'date-asc' : 'date-desc')}
+                className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[10.5px] font-medium transition-all cursor-pointer border ${
+                  sortBy.startsWith('date')
+                    ? 'bg-slate-200 text-slate-900 border-slate-400 font-bold'
+                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                }`}
+                title={`Sort by Date (${sortBy === 'date-desc' ? 'Newest First' : 'Oldest First'})`}
+              >
+                <Calendar className="w-2.5 h-2.5 text-slate-500" />
+                <span>Date {sortBy === 'date-desc' ? '↓' : sortBy === 'date-asc' ? '↑' : ''}</span>
+              </button>
+
+              {/* Sort by Name Toggle */}
+              <button
+                type="button"
+                onClick={() => setSortBy(sortBy === 'name-asc' ? 'name-desc' : 'name-asc')}
+                className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[10.5px] font-medium transition-all cursor-pointer border ${
+                  sortBy.startsWith('name')
+                    ? 'bg-slate-200 text-slate-900 border-slate-400 font-bold'
+                    : 'bg-white text-slate-500 border-slate-200 hover:bg-slate-50'
+                }`}
+                title={`Sort by Patient Name (${sortBy === 'name-asc' ? 'A to Z' : 'Z to A'})`}
+              >
+                <ArrowDownAZ className="w-2.5 h-2.5 text-slate-500" />
+                <span>Name {sortBy === 'name-asc' ? 'A-Z' : sortBy === 'name-desc' ? 'Z-A' : ''}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Dedicated Patient ID Sort Buttons (id-desc & id-asec) */}
+          <div className="grid grid-cols-2 gap-1.5">
             <button
               type="button"
-              onClick={() => setSortBy(sortBy === 'date-desc' ? 'date-asc' : 'date-desc')}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer border ${
-                sortBy.startsWith('date')
-                  ? 'bg-slate-100 text-slate-900 border-slate-300 font-bold'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              id="sort-id-desc-btn"
+              onClick={() => setSortBy('id-desc')}
+              className={`flex items-center justify-center gap-1.5 px-2 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                sortBy === 'id-desc'
+                  ? 'bg-sky-600 text-white border-sky-700 shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-sky-50/70 hover:border-sky-300'
               }`}
-              title={`Sort by Date (${sortBy === 'date-desc' ? 'Newest First' : 'Oldest First'})`}
+              title="Sort by Patient ID: Newest Entry First at Top (NPC/26/09/016 → NPC/26/09/001)"
             >
-              <Calendar className="w-3 h-3 text-slate-500" />
-              <span>Date {sortBy === 'date-desc' ? '↓' : sortBy === 'date-asc' ? '↑' : ''}</span>
+              <span className={`text-xs ${sortBy === 'id-desc' ? 'text-white' : 'text-sky-600 font-extrabold'}`}>↓</span>
+              <span className="font-mono text-[11px]">id-desc</span>
+              <span className="text-[10px] opacity-90 hidden sm:inline">(Newest Top)</span>
             </button>
 
-            {/* Sort by Name Toggle */}
             <button
               type="button"
-              onClick={() => setSortBy(sortBy === 'name-asc' ? 'name-desc' : 'name-asc')}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-medium transition-all cursor-pointer border ${
-                sortBy.startsWith('name')
-                  ? 'bg-slate-100 text-slate-900 border-slate-300 font-bold'
-                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              id="sort-id-asec-btn"
+              onClick={() => setSortBy('id-asec')}
+              className={`flex items-center justify-center gap-1.5 px-2 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                sortBy === 'id-asc' || sortBy === 'id-asec'
+                  ? 'bg-sky-600 text-white border-sky-700 shadow-xs'
+                  : 'bg-white text-slate-700 border-slate-200 hover:bg-sky-50/70 hover:border-sky-300'
               }`}
-              title={`Sort by Patient Name (${sortBy === 'name-asc' ? 'A to Z' : 'Z to A'})`}
+              title="Sort by Patient ID: Oldest Entry First at Top (NPC/26/09/001 → NPC/26/09/016)"
             >
-              <ArrowDownAZ className="w-3 h-3 text-slate-500" />
-              <span>Name {sortBy === 'name-asc' ? 'A-Z' : sortBy === 'name-desc' ? 'Z-A' : ''}</span>
+              <span className={`text-xs ${sortBy === 'id-asc' || sortBy === 'id-asec' ? 'text-white' : 'text-sky-600 font-extrabold'}`}>↑</span>
+              <span className="font-mono text-[11px]">id-asec</span>
+              <span className="text-[10px] opacity-90 hidden sm:inline">(Oldest Top)</span>
             </button>
+          </div>
+
+          {/* Active Order Guidance Indicator */}
+          <div className="flex items-center justify-between px-2 py-0.5 rounded-lg bg-sky-50/80 border border-sky-100 text-[10px] text-sky-800">
+            <span className="truncate">
+              {sortBy === 'id-desc' && (
+                <span><b>id-desc:</b> Newest entry top (e.g. NPC/26/09/016 → 001)</span>
+              )}
+              {(sortBy === 'id-asc' || sortBy === 'id-asec') && (
+                <span><b>id-asec:</b> Oldest entry top (e.g. NPC/26/09/001 → 016)</span>
+              )}
+              {sortBy.startsWith('date') && (
+                <span><b>Date:</b> {sortBy === 'date-desc' ? 'Newest consult date first' : 'Oldest consult date first'}</span>
+              )}
+              {sortBy.startsWith('name') && (
+                <span><b>Name:</b> {sortBy === 'name-asc' ? 'A to Z' : 'Z to A'}</span>
+              )}
+            </span>
+            {sortBy === 'id-desc' && (
+              <span className="shrink-0 text-[9px] font-bold text-sky-600 uppercase tracking-wider ml-1 bg-sky-100/80 px-1 rounded">Default</span>
+            )}
           </div>
         </div>
       </div>

@@ -16,7 +16,7 @@ import {
   Edit3,
 } from 'lucide-react';
 import { Patient } from '../types';
-import { formatPatientId } from '../utils/storage';
+import { formatPatientId, comparePatientsByIdDesc, comparePatientsByIdAsc } from '../utils/storage';
 import { getCleanPhone, openWhatsApp } from '../utils/whatsappHelper';
 
 interface PatientPhoneDirectoryModalProps {
@@ -43,10 +43,11 @@ export const PatientPhoneDirectoryModal: React.FC<PatientPhoneDirectoryModalProp
   );
   const [copiedNumbersNotice, setCopiedNumbersNotice] = useState(false);
   const [broadcastIndex, setBroadcastIndex] = useState(0);
+  const [sortBy, setSortBy] = useState<'id-desc' | 'id-asec'>('id-desc');
 
-  // Filter patients based on query and mode
+  // Filter and sort patients based on query and mode (newest Patient ID first by default)
   const filteredPatients = useMemo(() => {
-    return patients.filter((p) => {
+    const list = patients.filter((p) => {
       // Exclude deleted patients (only show active data from the backup sheet, never archives)
       if (p.deleted || p.status === 'Deleted') return false;
       if (filterMode === 'withPhone' && (!p.contact || !p.contact.trim())) return false;
@@ -62,7 +63,9 @@ export const PatientPhoneDirectoryModal: React.FC<PatientPhoneDirectoryModalProp
 
       return true;
     });
-  }, [patients, filterMode, searchQuery]);
+
+    return list.sort(sortBy === 'id-desc' ? comparePatientsByIdDesc : comparePatientsByIdAsc);
+  }, [patients, filterMode, searchQuery, sortBy]);
 
   // Selected patients array
   const selectedPatients = useMemo(() => {
@@ -397,19 +400,49 @@ export const PatientPhoneDirectoryModal: React.FC<PatientPhoneDirectoryModalProp
             </div>
 
             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              {/* Dedicated ID Sort Buttons */}
+              <div className="flex items-center gap-1 bg-slate-900 p-1 rounded-xl border border-slate-700/80">
+                <button
+                  type="button"
+                  onClick={() => setSortBy('id-desc')}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    sortBy === 'id-desc'
+                      ? 'bg-cyan-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Sort by Patient ID: Newest Entry at Top (NPC/26/09/016 → NPC/26/09/001)"
+                >
+                  <span>↓</span>
+                  <span className="font-mono text-[11px]">id-desc</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSortBy('id-asec')}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    sortBy === 'id-asec'
+                      ? 'bg-cyan-600 text-white shadow-xs'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                  title="Sort by Patient ID: Oldest Entry at Top (NPC/26/09/001 → NPC/26/09/016)"
+                >
+                  <span>↑</span>
+                  <span className="font-mono text-[11px]">id-asec</span>
+                </button>
+              </div>
+
               {/* Filter mode */}
               <select
                 value={filterMode}
                 onChange={(e) => setFilterMode(e.target.value as any)}
                 className="px-3 py-1.5 bg-slate-900 border border-slate-700 rounded-xl text-xs font-semibold text-slate-200 outline-none cursor-pointer"
               >
-                <option value="withPhone">With Phone Number Only</option>
+                <option value="withPhone">With Phone Only</option>
                 <option value="active">Active Patients</option>
                 <option value="all">All Patients</option>
               </select>
 
               {/* Search */}
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full sm:w-60">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"

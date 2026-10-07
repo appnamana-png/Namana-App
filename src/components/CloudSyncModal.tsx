@@ -35,6 +35,9 @@ import {
   verifyArchiveSpreadsheetLink,
   generateGoogleAppsScriptSnippet,
   generatePhoneDirectoryHtmlSnippet,
+  cleanScriptCode,
+  downloadCodeGsFile,
+  downloadIndexHtmlFile,
   GOOGLE_APPS_SCRIPT_SNIPPET,
 } from '../utils/googleSheetsSync';
 import { downloadJson } from '../utils/fileDownloadHelper';
@@ -387,13 +390,22 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
     }
   };
 
+  // Download Apps Script code directly to computer
+  const handleDownloadAppsScript = () => {
+    const code = generateGoogleAppsScriptSnippet(
+      archive1Status?.id || settings.archiveSheetId1,
+      archive2Status?.id || settings.archiveSheetId2
+    );
+    downloadCodeGsFile(code, 'Code.gs');
+  };
+
   // Copy Apps Script code
   const handleCopyAppsScript = () => {
     const code = generateGoogleAppsScriptSnippet(
       archive1Status?.id || settings.archiveSheetId1,
       archive2Status?.id || settings.archiveSheetId2
     );
-    navigator.clipboard.writeText(code);
+    navigator.clipboard.writeText(cleanScriptCode(code));
     setCopiedScript(true);
     setTimeout(() => setCopiedScript(false), 3000);
   };
@@ -401,9 +413,15 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
   // Copy Phone Directory HTML code
   const handleCopyPhoneDirectoryHtml = () => {
     const html = generatePhoneDirectoryHtmlSnippet();
-    navigator.clipboard.writeText(html);
+    navigator.clipboard.writeText(cleanScriptCode(html));
     setCopiedHtml(true);
     setTimeout(() => setCopiedHtml(false), 3000);
+  };
+
+  // Download Phone Directory Index.html directly to computer
+  const handleDownloadIndexHtml = () => {
+    const html = generatePhoneDirectoryHtmlSnippet();
+    downloadIndexHtmlFile(html);
   };
 
   // Export JSON backup
@@ -716,20 +734,40 @@ export const CloudSyncModal: React.FC<CloudSyncModalProps> = ({
                 <div className="flex flex-wrap items-center gap-2">
                   <button
                     type="button"
+                    onClick={handleDownloadAppsScript}
+                    className="flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg cursor-pointer transition-colors shadow-2xs"
+                    title="Download clean Code.gs file to your computer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download Code.gs</span>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={handleCopyAppsScript}
                     className="flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-lg cursor-pointer transition-colors shadow-2xs"
                   >
                     {copiedScript ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedScript ? 'Code.gs Copied!' : 'Copy Apps Script (Code.gs)'}</span>
+                    <span>{copiedScript ? 'Code.gs Copied!' : 'Copy Code.gs'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleCopyPhoneDirectoryHtml}
-                    className="flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg cursor-pointer transition-colors shadow-2xs"
+                    className="flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg cursor-pointer transition-colors shadow-2xs"
                   >
                     {copiedHtml ? <Check className="w-3.5 h-3.5" /> : <FileCode className="w-3.5 h-3.5" />}
-                    <span>{copiedHtml ? 'Index.html Copied!' : 'Copy Phone Directory HTML (Index.html)'}</span>
+                    <span>{copiedHtml ? 'Index.html Copied!' : 'Copy Index.html'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleDownloadIndexHtml}
+                    className="flex items-center gap-1 text-[11px] font-bold px-3 py-1.5 bg-cyan-700 hover:bg-cyan-800 text-white rounded-lg cursor-pointer transition-colors shadow-2xs"
+                    title="Download clean Index.html file to your computer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download Index.html</span>
                   </button>
                 </div>
               )}

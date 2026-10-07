@@ -87,33 +87,34 @@ export function formatPatientId(dateStr?: string, monthlySeq?: number): string {
 }
 
 /**
- * Parses Patient ID (supports NPC/26/09/001 and legacy formats)
+ * Parses Patient ID (supports NPC/26/09/016, full year NPC/2026/09/016, and legacy formats)
  */
 export function parsePatientId(patientId?: string): { yearYY: string; monthMM: string; seq: number } | null {
   if (!patientId || typeof patientId !== 'string') return null;
+  const clean = patientId.trim();
 
-  // Modern target format: NPC/26/09/001
-  const matchNew = patientId.match(/^NPC\/(\d{2})\/(\d{2})\/(\d+)$/i);
+  // Modern target format: NPC/26/09/016 (also supports single-digit months or dashes)
+  const matchNew = clean.match(/^[A-Za-z]+[/\\-_](\d{2})[/\\-_](\d{1,2})[/\\-_](\d+)$/i);
   if (matchNew) {
     return {
       yearYY: matchNew[1],
-      monthMM: matchNew[2],
+      monthMM: matchNew[2].padStart(2, '0'),
       seq: parseInt(matchNew[3], 10),
     };
   }
 
-  // Format with full year: NPC/2026/09/001
-  const matchFullYearWithMonth = patientId.match(/^NPC\/\d{2}(\d{2})\/(\d{2})\/(\d+)$/i);
+  // Format with full 4-digit year: NPC/2026/09/016
+  const matchFullYearWithMonth = clean.match(/^[A-Za-z]+[/\\-_]\d{2}(\d{2})[/\\-_](\d{1,2})[/\\-_](\d+)$/i);
   if (matchFullYearWithMonth) {
     return {
       yearYY: matchFullYearWithMonth[1],
-      monthMM: matchFullYearWithMonth[2],
+      monthMM: matchFullYearWithMonth[2].padStart(2, '0'),
       seq: parseInt(matchFullYearWithMonth[3], 10),
     };
   }
 
   // Legacy format: NPC/2026/101 or NPC/26/101 (without month)
-  const matchLegacy = patientId.match(/^NPC\/(?:\d{2})?(\d{2})\/(\d+)$/i);
+  const matchLegacy = clean.match(/^[A-Za-z]+[/\\-_](?:\d{2})?(\d{2})[/\\-_](\d+)$/i);
   if (matchLegacy) {
     return {
       yearYY: matchLegacy[1],
@@ -123,6 +124,89 @@ export function parsePatientId(patientId?: string): { yearYY: string; monthMM: s
   }
 
   return null;
+}
+
+/**
+ * Extracts numeric sort keys for a patient based on Patient ID (NPC/YY/MM/NNN)
+ * e.g., for NPC/26/09/016 -> year: 2026, month: 9, seq: 16
+ */
+export function getPatientIdSortKey(patient: Patient): { year: number; month: number; seq: number } {
+  if (!patient) return { year: 0, month: 0, seq: 0 };
+  const regNo = (patient.regNo || formatPatientId(patient.date, patient.serial) || '').trim();
+  const parsed = parsePatientId(regNo);
+  if (parsed) {
+    const year = parsed.yearYY.length === 2 ? 2000 + parseInt(parsed.yearYY, 10) : parseInt(parsed.yearYY, 10);
+    let month = parsed.monthMM ? parseInt(parsed.monthMM, 10) : 0;
+    if (!month && patient.date) {
+      const parts = patient.date.split('-');
+      if (parts.length >= 2) month = parseInt(parts[1], 10) || 0;
+    }
+    return {
+      year: isNaN(year) ? 0 : year,
+      month: isNaN(month) ? 0 : month,
+      seq: isNaN(parsed.seq) ? 0 : parsed.seq,
+    };
+  }
+
+  let year = 0;
+  let month = 0;
+  let seq = typeof patient.serial === 'number' ? patient.serial : 0;
+  if (patient.date) {
+    const dParts = patient.date.split('-');
+    if (dParts.length >= 2) {
+      year = parseInt(dParts[0], 10) || 0;
+      month = parseInt(dParts[1], 10) || 0;
+    }
+  }
+  const trailingNum = regNo.match(/(\d+)$/);
+  if (trailingNum) {
+    seq = parseInt(trailingNum[1], 10) || seq;
+  }
+  return { year, month, seq };
+}
+
+/**
+ * Sorts patients strictly by Patient ID descending:
+ * Newest entry at the top, oldest entry at the bottom.
+ * e.g. NPC/26/09/016 will be above NPC/26/09/015, and September (09) will be above August (08).
+ */
+export function comparePatientsByIdDesc(a: Patient, b: Patient): number {
+  const keyA = getPatientIdSortKey(a);
+  const keyB = getPatientIdSortKey(b);
+
+  // 1. Year descending (2026 before 2025)
+  if (keyB.year !== keyA.year) {
+    return keyB.year - keyA.year;
+  }
+
+  // 2. Month descending (September 09 before August 08)
+  if (keyB.month !== keyA.month) {
+    return keyB.month - keyA.month;
+  }
+
+  // 3. Sequence descending (016 before 015)
+  if (keyB.seq !== keyA.seq) {
+    return keyB.seq - keyA.seq;
+  }
+
+  // Tie-breaker 1: date descending
+  if (a.date && b.date && a.date !== b.date) {
+    return b.date.localeCompare(a.date);
+  }
+
+  // Tie-breaker 2: creation timestamp descending
+  if (a.createdAt && b.createdAt && a.createdAt !== b.createdAt) {
+    return b.createdAt - a.createdAt;
+  }
+
+  return (b.id || '').localeCompare(a.id || '');
+}
+
+/**
+ * Sorts patients by Patient ID ascending (oldest entry at top, newest entry at bottom).
+ */
+export function comparePatientsByIdAsc(a: Patient, b: Patient): number {
+  return -comparePatientsByIdDesc(a, b);
 }
 
 /**
@@ -467,7 +551,7 @@ export function deduplicatePatients(list: Patient[]): Patient[] {
     });
   }
 
-  return result;
+  return result.sort(comparePatientsByIdDesc);
 }
 
 export function loadPatients(): Patient[] {

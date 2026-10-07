@@ -48,6 +48,9 @@ import {
   verifyArchiveSpreadsheetLink,
   generatePhoneDirectoryHtmlSnippet,
   generateGoogleAppsScriptSnippet,
+  cleanScriptCode,
+  downloadCodeGsFile,
+  downloadIndexHtmlFile,
   GOOGLE_APPS_SCRIPT_SNIPPET,
 } from '../utils/googleSheetsSync';
 import { PatientPhoneDirectoryModal } from './PatientPhoneDirectoryModal';
@@ -103,6 +106,8 @@ export const GoogleSheetsDashboard: React.FC<GoogleSheetsDashboardProps> = ({
   const [showScriptGuide, setShowScriptGuide] = useState(false);
   const [codeViewerTab, setCodeViewerTab] = useState<'script' | 'html'>('script');
   const [showInAppDirectory, setShowInAppDirectory] = useState(false);
+  const [showCodeViewerModal, setShowCodeViewerModal] = useState(false);
+  const [previewCodeType, setPreviewCodeType] = useState<'code' | 'html'>('code');
 
   // Dual Archive Sheets & Validation State
   const [archiveSheet1Input, setArchiveSheet1Input] = useState(
@@ -1274,7 +1279,24 @@ export const GoogleSheetsDashboard: React.FC<GoogleSheetsDashboardProps> = ({
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="flex flex-col sm:flex-row items-stretch gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                      <button
+                        type="button"
+                        id="btn-download-script-code"
+                        onClick={() => {
+                          const code = generateGoogleAppsScriptSnippet(
+                            archive1Status?.id || settings.archiveSheetId1,
+                            archive2Status?.id || settings.archiveSheetId2
+                          );
+                          downloadCodeGsFile(code, 'Code.gs');
+                        }}
+                        className="flex items-center justify-center text-center gap-1.5 text-xs font-bold px-3 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl cursor-pointer shadow-xs transition-colors min-h-[38px]"
+                        title="Download Code.gs file to your computer (prevents any messenger or clipboard corruption)"
+                      >
+                        <Download className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-center">Download Code.gs</span>
+                      </button>
+
                       <button
                         type="button"
                         id="btn-copy-script-code"
@@ -1286,17 +1308,17 @@ export const GoogleSheetsDashboard: React.FC<GoogleSheetsDashboardProps> = ({
                                 archive1Status?.id || settings.archiveSheetId1,
                                 archive2Status?.id || settings.archiveSheetId2
                               );
-                              navigator.clipboard.writeText(code);
+                              navigator.clipboard.writeText(cleanScriptCode(code));
                               setCopiedScript(true);
                               setTimeout(() => setCopiedScript(false), 3000);
                             },
                             'Copies the customized Google Apps Script Code.gs containing your verified archive IDs.'
                           )
                         }
-                        className="flex-1 flex items-center justify-center text-center gap-1.5 text-xs font-bold px-3.5 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl cursor-pointer shadow-xs transition-colors min-h-[38px]"
+                        className="flex items-center justify-center text-center gap-1.5 text-xs font-bold px-3 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl cursor-pointer shadow-xs transition-colors min-h-[38px]"
                       >
                         {copiedScript ? <Check className="w-3.5 h-3.5 shrink-0" /> : <Copy className="w-3.5 h-3.5 shrink-0" />}
-                        <span className="text-center">{copiedScript ? 'Code.gs Copied!' : 'Copy Apps Script (Code.gs)'}</span>
+                        <span className="text-center">{copiedScript ? 'Code.gs Copied!' : 'Copy Code.gs'}</span>
                       </button>
 
                       <button
@@ -1307,17 +1329,47 @@ export const GoogleSheetsDashboard: React.FC<GoogleSheetsDashboardProps> = ({
                             'Copy HTML Code',
                             () => {
                               const html = generatePhoneDirectoryHtmlSnippet();
-                              navigator.clipboard.writeText(html);
+                              navigator.clipboard.writeText(cleanScriptCode(html));
                               setCopiedHtml(true);
                               setTimeout(() => setCopiedHtml(false), 3000);
                             },
                             'Copies the Phone Directory Dashboard HTML code for Apps Script Index.html.'
                           )
                         }
-                        className="flex-1 flex items-center justify-center text-center gap-1.5 text-xs font-bold px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 rounded-xl cursor-pointer shadow-xs transition-colors min-h-[38px]"
+                        className="flex items-center justify-center text-center gap-1.5 text-xs font-bold px-3 py-2.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 rounded-xl cursor-pointer shadow-xs transition-colors min-h-[38px]"
                       >
                         {copiedHtml ? <Check className="w-3.5 h-3.5 shrink-0" /> : <FileCode className="w-3.5 h-3.5 shrink-0" />}
-                        <span className="text-center">{copiedHtml ? 'Index.html Copied!' : 'Copy Directory (Index.html)'}</span>
+                        <span className="text-center">{copiedHtml ? 'Index.html Copied!' : 'Copy index.html'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          requestAction(
+                            'Download Index.html',
+                            () => {
+                              const html = generatePhoneDirectoryHtmlSnippet();
+                              downloadIndexHtmlFile(html);
+                            },
+                            'Downloads clean Index.html directly to your computer.'
+                          )
+                        }
+                        className="flex items-center justify-center text-center gap-1.5 text-xs font-bold px-3 py-2.5 bg-cyan-900/80 hover:bg-cyan-800 text-cyan-200 border border-cyan-700 rounded-xl cursor-pointer shadow-xs transition-colors min-h-[38px]"
+                        title="Download clean Index.html to your computer"
+                      >
+                        <Download className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-center">Download Index.html</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        id="btn-view-script-code"
+                        onClick={() => setShowCodeViewerModal(true)}
+                        className="flex items-center justify-center text-center gap-1.5 text-xs font-bold px-3 py-2.5 bg-indigo-950/70 hover:bg-indigo-900/80 text-indigo-300 border border-indigo-700/60 rounded-xl cursor-pointer shadow-xs transition-colors min-h-[38px]"
+                        title="View the clean, linear Code.gs directly in an on-screen code viewer"
+                      >
+                        <Eye className="w-3.5 h-3.5 shrink-0 text-indigo-400" />
+                        <span className="text-center">View Code.gs</span>
                       </button>
                     </div>
 
@@ -2103,6 +2155,150 @@ export const GoogleSheetsDashboard: React.FC<GoogleSheetsDashboardProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Lean & Clean Code Viewer Modal */}
+      {showCodeViewerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-4xl w-full shadow-2xl overflow-hidden my-auto text-slate-100 flex flex-col max-h-[92vh]">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/70 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-cyan-950/80 border border-cyan-800/80 rounded-xl text-cyan-400">
+                  <Code className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-100">
+                      {previewCodeType === 'code' ? 'Code.gs (Google Apps Script)' : 'Index.html (Telephone Directory)'}
+                    </h3>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/80">
+                      Clean V8 Verified
+                    </span>
+                    <span className="hidden sm:inline text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-950/80 text-cyan-400 border border-cyan-800/80">
+                      Pure ASCII
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Lean, linear, zero-warning code ready to copy-paste or download
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCodeViewerModal(false)}
+                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Subheader & Tab Switcher */}
+            <div className="px-6 py-3 bg-slate-950/40 border-b border-slate-800 flex flex-wrap items-center justify-between gap-2 shrink-0">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPreviewCodeType('code')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                    previewCodeType === 'code'
+                      ? 'bg-cyan-600 text-white'
+                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  Code.gs
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewCodeType('html')}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                    previewCodeType === 'html'
+                      ? 'bg-cyan-600 text-white'
+                      : 'bg-slate-800/80 text-slate-300 hover:bg-slate-800'
+                  }`}
+                >
+                  Index.html
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {previewCodeType === 'code' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const code = generateGoogleAppsScriptSnippet(
+                          archive1Status?.id || settings.archiveSheetId1,
+                          archive2Status?.id || settings.archiveSheetId2
+                        );
+                        downloadCodeGsFile(code, 'Code.gs');
+                      }}
+                      className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg cursor-pointer transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>Download File</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const code = generateGoogleAppsScriptSnippet(
+                          archive1Status?.id || settings.archiveSheetId1,
+                          archive2Status?.id || settings.archiveSheetId2
+                        );
+                        navigator.clipboard.writeText(cleanScriptCode(code));
+                        setCopiedScript(true);
+                        setTimeout(() => setCopiedScript(false), 3000);
+                      }}
+                      className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg cursor-pointer transition-colors"
+                    >
+                      {copiedScript ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedScript ? 'Copied!' : 'Copy Code'}</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const html = generatePhoneDirectoryHtmlSnippet();
+                      navigator.clipboard.writeText(cleanScriptCode(html));
+                      setCopiedHtml(true);
+                      setTimeout(() => setCopiedHtml(false), 3000);
+                    }}
+                    className="flex items-center gap-1 text-xs font-bold px-3 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg cursor-pointer transition-colors"
+                  >
+                    {copiedHtml ? <Check className="w-3.5 h-3.5" /> : <FileCode className="w-3.5 h-3.5" />}
+                    <span>{copiedHtml ? 'Copied!' : 'Copy HTML'}</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Code Body */}
+            <div className="p-6 overflow-y-auto flex-1 bg-slate-950">
+              <pre className="font-mono text-[11.5px] leading-relaxed text-slate-200 whitespace-pre overflow-x-auto select-all">
+                {previewCodeType === 'code'
+                  ? cleanScriptCode(
+                      generateGoogleAppsScriptSnippet(
+                        archive1Status?.id || settings.archiveSheetId1,
+                        archive2Status?.id || settings.archiveSheetId2
+                      )
+                    )
+                  : cleanScriptCode(generatePhoneDirectoryHtmlSnippet())}
+              </pre>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 border-t border-slate-800 bg-slate-950/70 flex items-center justify-between text-xs text-slate-400 shrink-0">
+              <span>Tip: Click anywhere inside the code box and press Ctrl+A / Cmd+A to select everything cleanly.</span>
+              <button
+                type="button"
+                onClick={() => setShowCodeViewerModal(false)}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl cursor-pointer transition-colors"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
