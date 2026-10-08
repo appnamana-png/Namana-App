@@ -33,7 +33,6 @@ import {
   ChevronUp,
   HardDrive,
   Sparkles,
-  Smartphone,
 } from 'lucide-react';
 import { ClinicSettings, Patient } from '../types';
 import {
@@ -765,18 +764,6 @@ export const GoogleSheetsDashboard: React.FC<GoogleSheetsDashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {onOpenInstallModal && (
-              <button
-                type="button"
-                onClick={onOpenInstallModal}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-black shadow-md cursor-pointer transition-all active:scale-95"
-                title="Install App & Download Android APK without limit"
-              >
-                <Smartphone className="w-4 h-4" />
-                <span>Install App / APK</span>
-              </button>
-            )}
-
             {cleanId ? (
               <div className="flex items-center gap-2 px-3.5 py-1.5 bg-cyan-950/60 text-cyan-300 border border-cyan-800/80 rounded-xl text-xs font-bold shadow-sm">
                 <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.8)]" />
@@ -786,41 +773,6 @@ export const GoogleSheetsDashboard: React.FC<GoogleSheetsDashboardProps> = ({
               <div className="px-3.5 py-1.5 bg-slate-800/80 text-slate-400 border border-slate-700/60 rounded-xl text-xs font-semibold">
                 No Sheet Configured
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Mobile & Tablet App Installation & Direct APK Card */}
-        <div className="bg-gradient-to-r from-slate-900 via-sky-950/40 to-slate-900 p-4 sm:p-5 rounded-3xl border border-sky-800/40 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-              <Smartphone className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base font-bold text-slate-100">
-                  Mobile App &amp; Android APK (.apk)
-                </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  Unlimited Install
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Install the clinic app directly on any visiting phone or tablet, or download the Android APK file without limit.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            {onOpenInstallModal && (
-              <button
-                type="button"
-                onClick={onOpenInstallModal}
-                className="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
-              >
-                <Download className="w-4 h-4" />
-                <span>Open Install &amp; APK Manager</span>
-              </button>
             )}
           </div>
         </div>

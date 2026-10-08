@@ -30,7 +30,6 @@ import {
   Eye,
   ExternalLink,
   Clock,
-  Edit3,
 } from 'lucide-react';
 import { Patient, TreatmentModalities, FollowUpVisit, ReceiptData, PaymentMethod, LocumPhysiotherapist } from '../types';
 import { MODALITIES_LIST, BLOOD_GROUPS, COMMON_DIAGNOSES, HEIGHT_PRESETS } from '../constants';
@@ -53,7 +52,6 @@ import { ManageReferralDoctorsModal } from './ManageReferralDoctorsModal';
 import { ManageTreatmentsModal } from './ManageTreatmentsModal';
 import { PdfViewerModal } from './PdfViewerModal';
 import { PermanentDeleteModal } from './PermanentDeleteModal';
-import { EditPatientModal } from './EditPatientModal';
 import {
   PainScaleComponent,
   PainImprovementBadge,
@@ -102,7 +100,6 @@ export const PatientCaseSheet: React.FC<PatientCaseSheetProps> = ({
   onEditPatient,
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('diagnosis');
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [showDeletePatientModal, setShowDeletePatientModal] = useState(false);
   const [showPermanentDeleteModal, setShowPermanentDeleteModal] = useState(false);
   const [deleteFollowUpIdx, setDeleteFollowUpIdx] = useState<number | null>(null);
@@ -558,17 +555,6 @@ export const PatientCaseSheet: React.FC<PatientCaseSheetProps> = ({
                   size="md"
                   onValueCaptured={(val) => updateField('name', String(val))}
                 />
-                <button
-                  type="button"
-                  id="btn-edit-patient-details-name-row"
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-600 hover:bg-sky-700 active:bg-sky-800 text-white text-xs font-bold transition-all shadow-xs hover:shadow cursor-pointer shrink-0"
-                  title="Edit patient name, phone number, and all demographics"
-                >
-                  <Edit3 className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Edit Details</span>
-                  <span className="inline sm:hidden">Edit</span>
-                </button>
               </div>
             )}
           </div>
@@ -585,18 +571,6 @@ export const PatientCaseSheet: React.FC<PatientCaseSheetProps> = ({
               >
                 <Receipt className="w-3.5 h-3.5 text-white shrink-0" />
                 <span className="text-center whitespace-nowrap">Receipt</span>
-              </button>
-
-              {/* Edit Patient Details Direct Button */}
-              <button
-                type="button"
-                id="btn-case-sheet-edit-toolbar"
-                onClick={() => setIsEditModalOpen(true)}
-                className="flex items-center justify-center text-center gap-1.5 px-3 py-1.5 rounded-xl bg-sky-50 hover:bg-sky-100 active:bg-sky-200 text-sky-900 border border-sky-300 text-xs font-bold transition-colors cursor-pointer shadow-2xs whitespace-nowrap"
-                title="Edit all patient details and demographics"
-              >
-                <Edit3 className="w-3.5 h-3.5 text-sky-700 shrink-0" />
-                <span className="text-center whitespace-nowrap">Edit Details</span>
               </button>
 
               {/* Follow-up Sessions Direct Access Button */}
@@ -927,7 +901,7 @@ export const PatientCaseSheet: React.FC<PatientCaseSheetProps> = ({
                 type="button"
                 id="tab-view-all-sections"
                 onClick={() => setActiveSubTab('all')}
-                className={`w-full lg:w-auto px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-between lg:justify-center gap-1.5 border shrink-0 ${
+                className={`w-full lg:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-2 border shrink-0 text-center ${
                   activeSubTab === 'all'
                     ? 'bg-slate-900 text-white border-slate-950 shadow-xs ring-2 ring-slate-400'
                     : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100 hover:text-slate-900'
@@ -935,7 +909,7 @@ export const PatientCaseSheet: React.FC<PatientCaseSheetProps> = ({
                 title="View All 3 Sections on a Single Continuous Page"
               >
                 <Eye className="w-3.5 h-3.5 shrink-0" />
-                <span className="whitespace-nowrap">View All Sections</span>
+                <span className="whitespace-nowrap text-center">View All Sections</span>
                 {activeSubTab === 'all' && (
                   <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
                 )}
@@ -999,7 +973,7 @@ export const PatientCaseSheet: React.FC<PatientCaseSheetProps> = ({
               </div>
 
               {/* Row 1: Age, Sex, Height, Weight */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
                 {/* Age */}
                 <div>
                   <div className="h-5 flex items-center mb-1">
@@ -1110,8 +1084,8 @@ export const PatientCaseSheet: React.FC<PatientCaseSheetProps> = ({
                 </div>
               </div>
 
-              {/* Row 2: Blood Group, Contact Phone, Visit Type, Referred By (Unified Single Row in Tab & Desktop) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs items-end">
+              {/* Row 2: Blood Group, Contact Phone, Visit Type, Referred By (Responsive 2-Col on Tablet, 4-Col on Desktop) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs items-end">
                 {/* Blood Group */}
                 <div>
                   <div className="h-5 flex items-center justify-between mb-1">
@@ -1131,33 +1105,20 @@ export const PatientCaseSheet: React.FC<PatientCaseSheetProps> = ({
                   </select>
                 </div>
 
-                {/* Phone */}
-                <div>
+                {/* Contact Phone & WhatsApp (Robust Responsive Layout, No Overlaps) */}
+                <div className="min-w-0">
                   <div className="h-5 flex items-center justify-between mb-1">
                     <label className="block text-[11px] font-bold text-slate-600 truncate">Contact Phone</label>
-                    <button
-                      type="button"
-                      id="btn-whatsapp-menu"
-                      onClick={() => {
-                        setCustomPhone(patient.contact || '');
-                        setWhatsAppModalOpen(true);
-                      }}
-                      className="flex items-center gap-1 text-[10px] font-bold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-1.5 py-0.5 rounded-lg cursor-pointer transition-colors shadow-2xs shrink-0"
-                      title="Send Clinical Report, All Receipts, or Both via WhatsApp"
-                    >
-                      <MessageSquare className="w-2.5 h-2.5 text-emerald-600" />
-                      <span>WhatsApp</span>
-                    </button>
                   </div>
-                  <div className="flex items-center gap-1.5 h-10">
-                    <div className="relative flex-1">
+                  <div className="flex items-center gap-1.5 h-10 min-w-0">
+                    <div className="relative flex-1 min-w-0">
                       <input
                         type="text"
                         value={patient.contact}
                         onChange={(e) => updateField('contact', e.target.value)}
                         placeholder="e.g. 9880517715"
                         disabled={isDeleted}
-                        className="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 text-slate-900 rounded-xl focus:border-sky-500 focus:ring-1 focus:ring-sky-200 outline-none font-semibold font-mono shadow-2xs h-10"
+                        className="w-full pl-3 pr-8 py-2 bg-white border border-slate-200 text-slate-900 rounded-xl focus:border-sky-500 focus:ring-1 focus:ring-sky-200 outline-none font-semibold font-mono shadow-2xs h-10 text-xs sm:text-sm"
                       />
                       {!isDeleted && (
                         <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
@@ -1177,11 +1138,12 @@ export const PatientCaseSheet: React.FC<PatientCaseSheetProps> = ({
                         setCustomPhone(patient.contact || '');
                         setWhatsAppModalOpen(true);
                       }}
-                      className="shrink-0 w-10 h-10 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-xs transition-colors cursor-pointer"
+                      className="shrink-0 h-10 px-2.5 sm:px-3 flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white rounded-xl shadow-xs transition-colors cursor-pointer text-xs font-bold"
                       title="Send Report & Receipts via WhatsApp"
                       aria-label="WhatsApp Report & Receipts Menu"
                     >
-                      <MessageSquare className="w-4 h-4" />
+                      <MessageSquare className="w-3.5 h-3.5 shrink-0" />
+                      <span className="hidden sm:inline">WhatsApp</span>
                     </button>
                   </div>
                 </div>
@@ -2888,19 +2850,6 @@ export const PatientCaseSheet: React.FC<PatientCaseSheetProps> = ({
             onPermanentDeletePatient(patient.id);
           }}
           onClose={() => setShowPermanentDeleteModal(false)}
-        />
-      )}
-
-      {/* Edit Patient Demographics & Profile Modal */}
-      {isEditModalOpen && (
-        <EditPatientModal
-          patient={patient}
-          existingPatients={allPatients}
-          onSave={(updated) => {
-            onUpdatePatient(updated);
-            setIsEditModalOpen(false);
-          }}
-          onClose={() => setIsEditModalOpen(false)}
         />
       )}
     </div>
